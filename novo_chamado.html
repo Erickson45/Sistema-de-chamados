@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+ {% block title %}🆕 Novo Chamado - TechFlow{% endblock %}
+ {% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+   <h2 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Novo Chamado</h2>
+   <div class="d-flex gap-2">
+    <a href="/" class="btn btn-outline-light d-flex align-items-center"><i class="bi bi-list-ul me-1"></i> Chamados</a>
+    <button id="toggle-theme" type="button" class="btn btn-outline-light d-flex align-items-center"><i class="bi bi-moon-stars"></i></button>
+   </div>
+  </div>
+
+  <form action="/criar" method="POST" data-aos="fade-up" class="row g-4">
+   <div class="col-md-6">
+    <label for="cidade" class="form-label">Cidade</label>
+    <input type="text" class="form-control" id="cidade" name="cidade">
+   </div>
+
+   <div class="col-md-6">
+    <label for="uf" class="form-label">UF</label>
+    <select class="form-select" id="uf" name="uf" required>
+     <option value="">Selecione</option>
+     {% for estado in ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'] %}
+      <option value="{{ estado }}">{{ estado }}</option>
+     {% endfor %}
+    </select>
+   </div>
+
+   <div class="col-md-6">
+    <label for="site" class="form-label">Site</label>
+    <input type="text" class="form-control" id="site" name="site">
+   </div>
+
+   <div class="col-md-6">
+    <label for="cell" class="form-label">Cell Name</label>
+    <input type="text" class="form-control" id="cell" name="cell">
+   </div>
+
+   <div class="col-md-6">
+    <label for="tecnologia" class="form-label">Tecnologia</label>
+    <select class="form-select" id="tecnologia" name="tecnologia" required>
+     <option value="">Selecione a tecnologia</option>
+     <option value="LTE">LTE</option>
+     <option value="NR">NR</option>
+    </select>
+   </div>
+
+   <div class="col-md-6">
+    <label for="tipo" class="form-label">Tipo</label>
+    <select class="form-select" id="tipo" name="tipo" required>
+     <option value="">Selecione o tipo</option>
+     <option value="Remoto">Remoto</option>
+     <option value="Físico">Físico</option>
+    </select>
+   </div>
+
+   <div class="col-md-6">
+    <label for="alteracao" class="form-label">Alteração</label>
+    <input type="text" class="form-control" id="alteracao" name="alteracao">
+   </div>
+
+   <div class="col-md-6">
+    <label for="aplicacao_inicio" class="form-label">Data e Hora da Aplicação</label>
+    <input type="datetime-local" class="form-control" id="aplicacao_inicio" name="aplicacao_inicio">
+   </div>
+
+   <div class="col-md-6">
+    <label for="aplicacao_fim" class="form-label">Data e Hora Fim da Aplicação</label>
+    <input type="datetime-local" class="form-control" id="aplicacao_fim" name="aplicacao_fim">
+   </div>
+
+   <div class="col-md-6">
+    <label for="antes" class="form-label">Antes</label>
+    <input type="text" class="form-control" id="antes" name="antes">
+   </div>
+
+   <div class="col-md-6">
+    <label for="depois" class="form-label">Depois</label>
+    <input type="text" class="form-control" id="depois" name="depois">
+   </div>
+
+   <div class="col-md-6">
+    <label for="obs" class="form-label">Observações</label>
+    <textarea class="form-control" id="obs" name="obs" rows="3"></textarea>
+   </div>
+
+   <div class="col-md-6">
+    <label for="descricao" class="form-label">Descrição</label>
+    <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
+   </div>
+
+   <div class="col-md-6">
+    <label for="material" class="form-label">Material de Apoio</label>
+    <textarea class="form-control" id="material" name="material" rows="3"></textarea>
+   </div>
+
+   <div class="col-md-6">
+    <label for="responsavel" class="form-label">Responsável</label>
+    <select class="form-select" id="responsavel" name="responsavel" required>
+     <option value="">Selecione o responsável</option>
+     <option value="Erickson">Erickson</option>
+     <option value="Arthur">Arthur</option>
+     <option value="Wladson">Wladson</option>
+     <option value="Irineu">Irineu</option>
+     <option value="Cicero">Cicero</option>
+    </select>
+   </div>
+
+   <div class="col-md-6">
+    <label for="status" class="form-label">Status</label>
+    <select class="form-select" id="status" name="status" required>
+     <option value="">Selecione o status</option>
+     <option value="Aberto">Aberto</option>
+     <option value="Em andamento">Em andamento</option>
+     <option value="Concluído">Concluído</option>
+    </select>
+   </div>
+
+   <div class="col-12 d-flex gap-3">
+    <button type="submit" class="btn btn-primary shadow-sm"><i class="bi bi-save me-1"></i>Salvar Chamado</button>
+    <a href="/" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+   </div>
+  </form>
+
+  <script>
+   const themeToggleButton = document.getElementById('toggle-theme');
+   if (themeToggleButton) {
+    themeToggleButton.addEventListener('click', () => {
+     document.body.classList.toggle('light-mode');
+     localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    });
+   }
+  </script>
+ {% endblock %}

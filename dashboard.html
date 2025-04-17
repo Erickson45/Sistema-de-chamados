@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<style>
+    .card-hover:hover {
+        transform: scale(1.03);
+        transition: transform 0.2s ease-in-out;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .card-title {
+        font-size: 0.8rem;
+    }
+
+    /* Novo estilo com rolagem para listas */
+    .scroll-list {
+        max-height: 180px;
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    .scroll-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scroll-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scroll-list::-webkit-scrollbar-thumb {
+        background-color: rgba(255,255,255,0.3);
+        border-radius: 3px;
+    }
+
+    /* Estilo para a legenda do mapa */
+    .map-legend {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background-color: white;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        z-index: 1000; /* Garante que a legenda fique acima do mapa */
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="container mt-5 text-white">
+    <h2 class="mb-4 fw-bold text-light text-shadow text-center animate__animated animate__fadeIn">Dashboard de Chamados</h2>
+    <form method="get" action="{{ url_for('dashboard') }}" class="row g-3 mb-4 animate__animated animate__fadeIn" id="filter-form">
+
+        <div class="col-md-3">
+            <select name="cidade" class="form-select">
+                <option value="">Todas as Cidades</option>
+                {% for cidade in cidades_unicas %}
+                <option value="{{ cidade }}" {% if request.args.get('cidade') == cidade %}selected{% endif %}>{{ cidade }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="site" class="form-select">
+                <option value="">Todos os Sites</option>
+                {% for site in sites_unicos %}
+                <option value="{{ site }}" {% if request.args.get('site') == site %}selected{% endif %}>{{ site }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="responsavel" class="form-select">
+                <option value="">Todos os Responsáveis</option>
+                {% for r in responsaveis_unicos %}
+                <option value="{{ r }}" {% if request.args.get('responsavel') == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="data_inicial" class="form-control" value="{{ request.args.get('data_inicial', '') }}">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="data_final" class="form-control" value="{{ request.args.get('data_final', '') }}">
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">Todos os Status</option>
+                {% for s in status_unicos %}
+                <option value="{{ s }}" {% if request.args.get('status') == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="tipo" class="form-select">
+                <option value="">Todos os Tipos</option>
+                <option value="Remoto" {% if request.args.get('tipo') == 'Remoto' %}selected{% endif %}>Remoto</option>
+                <option value="Fisico" {% if request.args.get('tipo') == 'Fisico' %}selected{% endif %}>Físico</option>
+            </select>
+        </div>
+
+
+        <div class="col-md-3 d-flex">
+            <button type="submit" class="btn btn-outline-light me-2">Aplicar Filtros</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Limpar</a>
+        </div>
+    </form>
+
+
+    <div class="row g-3 mb-4 animate__animated animate__fadeInUp">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 bg-primary text-white text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-bar-chart-fill fs-3"></i>
+                    <p class="mb-0 small">Total</p>
+                    <h5 class="fw-bold">{{ total }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 bg-secondary text-white text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-folder-fill fs-3"></i>
+                    <p class="mb-0 small">Abertos</p>
+                    <h5 class="fw-bold">{{ por_status['Aberto'] if 'Aberto' in por_status else 0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 bg-warning text-dark text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-hourglass-split fs-3"></i>
+                    <p class="mb-0 small">Em Andamento</p>
+                    <h5 class="fw-bold">{{ por_status['Em andamento'] if 'Em andamento' in por_status else 0 }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 rounded-3 bg-success text-white text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-check-circle-fill fs-3"></i>
+                    <p class="mb-0 small">Concluídos</p>
+                    <h5 class="fw-bold">{{ por_status['Concluído'] if 'Concluído' in por_status else 0 }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4 animate__animated animate__fadeInUp">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-info text-white">
+                <div class="card-body">
+                    <div class="text-center">
+                        <i class="bi bi-geo-alt-fill fs-3"></i>
+                        <p class="mb-0 small">Chamados por Cidade</p>
+                        <h6 class="fw-bold">{{ por_cidade|length }} cidades</h6>
+                    </div>
+                    <ul class="mt-3 list-unstyled text-white scroll-list">
+                        {% for cidade, qtd in por_cidade|dictsort(by='value', reverse=True) %}
+                        <li>{{ cidade }}: <strong>{{ qtd }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-danger text-white">
+                <div class="card-body">
+                    <div class="text-center">
+                        <i class="bi bi-building fs-3"></i>
+                        <p class="mb-0 small">Chamados por Site</p>
+                        <h6 class="fw-bold">{{ por_site|length }} sites</h6>
+                    </div>
+                    <ul class="mt-3 list-unstyled text-white scroll-list">
+                        {% for site, qtd in por_site|dictsort(by='value', reverse=True) %}
+                        <li>{{ site }}: <strong>{{ qtd }}</strong></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-5 shadow-lg border-0 rounded-4 animate__animated animate__fadeInUp">
+        <div class="card-body">
+            <h5 class="card-title text-uppercase small fw-bold mb-3">Mapa de Chamados por Cidade</h5>
+            <div id="map" style="height: 450px; border-radius: 15px;"></div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4 animate__animated animate__fadeInLeft">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small fw-bold mb-3">Chamados por Status</h5>
+                    <canvas id="graficoStatus" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small fw-bold mb-3">Chamados por Estado (UF)</h5>
+                    <canvas id="graficoUF" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4 animate__animated animate__fadeInRight">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small fw-bold mb-3">Chamados por Responsável</h5>
+                    <canvas id="graficoResponsavel" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small fw-bold mb-3">Chamados por Tecnologia</h5>
+                    <canvas id="graficoTecnologia" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3 mb-4 animate__animated animate__fadeInUp">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small fw-bold mb-3">Chamados por Dia</h5>
+                    <canvas id="graficoPorDia" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded-3 bg-white">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase small fw-bold mb-3">Chamados por Semana</h5>
+                    <canvas id="graficoPorSemana" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5 animate__animated animate__fadeInUp">
+        <div class="card shadow-sm border-0 rounded-3 bg-white">
+            <div class="card-body">
+                <h5 class="card-title text-uppercase small fw-bold mb-3">10 Chamados Mais Recentes</h5>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Data Abertura</th>
+                            <th>Responsável</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chamado in chamados_recentes %}
+                        <tr>
+                            <td>{{ chamado.ID }}</td>
+                            <td>{{ chamado.Tipo }}</td>
+                            <td>{{ chamado['Data de Abertura'] }}</td>
+                            <td>{{ chamado.Responsável }}</td>
+                            <td>{{ chamado.Status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const statusData = {{ por_status | tojson }};
+        const responsavelData = {{ por_responsavel | tojson }};
+        const tecnologiaData = {{ por_tecnologia | tojson }};
+        const estadoData = {{ por_estado | tojson }};
+        const cidades = {{ cidades_geo | tojson }};
+
+        const map = L.map('map').setView([-5.2, -38.5], 6);
+
+        // Camadas de mapa base
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        });
+
+        const satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        // Agrupamento de marcadores
+        const markerCluster = L.markerClusterGroup();
+
+        // Definindo ícones personalizados
+        const icon = L.icon({  // Usar um único ícone
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+
+        function getMarkerColor(status) {
+            switch (status.toLowerCase()) {
+                case 'aberto': return '#0d6efd';
+                case 'em andamento': return '#ffc107';
+                case 'concluído': return '#198754';
+                default: return '#6c757d';
+            }
+        }
+
+        let markers = []; // Array para armazenar os marcadores
+
+        cidades.forEach(cidade => {
+            const marker = L.marker([cidade.lat, cidade.lng], { icon: icon }); // Aplicar o ícone padrão
+            let statusString = '';
+            if (cidade.status_counts && typeof cidade.status_counts === 'object') {
+                statusString = Object.entries(cidade.status_counts)
+                    .map(([status, count]) => `<b>${status}:</b> ${count} chamados`)
+                    .join('<br>');
+            } else {
+                statusString = 'Status não disponível';
+            }
+
+            marker.bindPopup(`
+                <b>${cidade.nome}</b><br>
+                Total de Chamados: ${cidade.qtd}<br>
+                Tipo: ${cidade.tipos_chamados?.join(', ') || 'N/A'}<br>
+                Tecnologias: ${cidade.tecnologias?.join(', ') || 'N/A'}<br>
+                Status dos Chamados:<br>${statusString}
+            `);
+
+            markerCluster.addLayer(marker);
+            markers.push(marker); // Armazenar o marcador
+        });
+
+        // Controles de camadas
+        const baseMaps = {
+            "OpenStreetMap": osmLayer,
+            "Satélite": satelliteLayer
+        };
+
+        const overlayMaps = {
+            "Chamados": markerCluster
+        };
+
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+        // Camada padrão
+        map.addLayer(osmLayer);
+        map.addLayer(markerCluster);
+
+        // Função para filtrar os marcadores
+        function filterMarkers() {
+            markerCluster.clearLayers();
+            const cidadeFilter = document.querySelector('select[name="cidade"]').value.toLowerCase();
+            const siteFilter = document.querySelector('select[name="site"]').value.toLowerCase();
+            const responsavelFilter = document.querySelector('select[name="responsavel"]').value.toLowerCase();
+            const statusFilter = document.querySelector('select[name="status"]').value.toLowerCase();
+            const tipoFilter = document.querySelector('select[name="tipo"]').value; // Alteração: Pegar o valor exato
+
+            markers.forEach(marker => {
+                const cidade = marker.getPopup().getContent().split('<b>')[1].split('</b>')[0].toLowerCase();
+                const content = marker.getPopup().getContent().toLowerCase();
+                const tipo = marker.getPopup().getContent().split('Tipo: ')[1].split('<br>')[0]; // Extrair o tipo do popup
+
+                if ((!cidadeFilter || cidade.includes(cidadeFilter)) &&
+                    (!siteFilter || content.includes(siteFilter)) &&
+                    (!responsavelFilter || content.includes(responsavelFilter)) &&
+                    (!statusFilter || content.includes(statusFilter)) &&
+                    (!tipoFilter || tipoFilter === "" || tipo.includes(tipoFilter))) { // Alteração: Filtrar por tipo
+                    markerCluster.addLayer(marker);
+                }
+            });
+        }
+
+
+        // Adicionar event listeners para os filtros
+        document.querySelectorAll('#filter-form select, #filter-form input').forEach(el => {
+            el.addEventListener('change', filterMarkers);
+        });
+
+        // Chamar a função de filtro inicialmente para aplicar os filtros da URL (se houver)
+        filterMarkers();
+
+        // Gráfico de Status
+        new Chart(document.getElementById('graficoStatus'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(statusData),
+                datasets: [{
+                    label: 'Status',
+                    data: Object.values(statusData),
+                    backgroundColor: ['#0d6efd', '#ffc107', '#198754'],
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutCubic'
+                },
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        borderColor: '#fff',
+                        borderWidth: 1,
+                        titleFont: { size: 16 },
+                        bodyFont: { size: 14 },
+                        cornerRadius: 6,
+                        padding: 10
+                    }
+                },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Gráfico de Estados (UF)
+        new Chart(document.getElementById('graficoUF'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(estadoData),
+                datasets: [{
+                    label: 'Estado',
+                    data: Object.values(estadoData),
+                    backgroundColor: '#6610f2',
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuart'
+                },
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Gráfico de Responsável
+        new Chart(document.getElementById('graficoResponsavel'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(responsavelData),
+                datasets: [{
+                    label: 'Chamados',
+                    data: Object.values(responsavelData),
+                    backgroundColor: '#20c997',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                animation: {
+                    duration: 1000,
+                    delay: ctx => ctx.dataIndex * 150,
+                    easing: 'easeOutBounce'
+                },
+                responsive: true,
+                plugins: { legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        borderColor: '#fff',
+                        borderWidth: 1,
+                        titleFont: { size: 16 },
+                        bodyFont: { size: 14 },
+                        cornerRadius: 6,
+                        padding: 10
+                    } },
+                scales: { x: { beginAtZero: true } }
+            }
+        });
+
+        // Gráfico de Tecnologia com Gradiente e Animação
+        const ctxTec = document.getElementById('graficoTecnologia').getContext('2d');
+        const gradientTec = ctxTec.createLinearGradient(0, 0, 600, 0);
+        gradientTec.addColorStop(0, '#00c9ff');
+        gradientTec.addColorStop(1, '#92fe9d');
+
+        new Chart(ctxTec, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(tecnologiaData),
+                datasets: [{
+                    label: 'Tecnologia',
+                    data: Object.values(tecnologiaData),
+                    backgroundColor: gradientTec,
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuint'
+                },
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        borderColor: '#fff',
+                        borderWidth: 1,
+                        titleFont: { size: 16 },
+                        bodyFont: { size: 14 },
+                        cornerRadius: 6,
+                        padding: 10
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+
+        const chamadosPorDia = {{ chamados_por_dia | tojson }};
+        const chamadosPorSemana = {{ chamados_por_semana | tojson }};
+
+        new Chart(document.getElementById('graficoPorDia'), {
+            type: 'line',
+            data: {
+                labels: Object.keys(chamadosPorDia),
+                datasets: [{
+                    label: 'Chamados por Dia',
+                    data: Object.values(chamadosPorDia),
+                    fill: true,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 1000 },
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        new Chart(document.getElementById('graficoPorSemana'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(chamadosPorSemana),
+                datasets: [{
+                    label: 'Chamados por Semana',
+                    data: Object.values(chamadosPorSemana),
+                    backgroundColor: '#20c997',
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 1000 },
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+    </script>
+</div>
+
+{% endblock %}

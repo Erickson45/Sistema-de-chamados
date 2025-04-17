@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block title %}🔔 Alertas Diários - TechFlow{% endblock %}
+{% block content %}
+
+<h2 class="mb-4" data-aos="fade-down">Alertas Diários</h2>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-bg-success" data-aos="fade-right">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="card-title"><i class="bi bi-check-circle me-2"></i>Concluídos</h6>
+                    <p class="fs-4 fw-bold mb-0">
+                        {{ chamados|selectattr('Status', 'equalto', 'Concluído')|list|length }}</p>
+                </div>
+                <i class="bi bi-clipboard-check display-6"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-bg-warning" data-aos="fade-up">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="card-title"><i class="bi bi-hourglass-split me-2"></i>Em Andamento</h6>
+                    <p class="fs-4 fw-bold mb-0">
+                        {{ chamados|selectattr('Status', 'equalto', 'Em andamento')|list|length }}</p>
+                </div>
+                <i class="bi bi-play-circle display-6"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-bg-secondary" data-aos="fade-left">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="card-title"><i class="bi bi-folder-plus me-2"></i>Abertos</h6>
+                    <p class="fs-4 fw-bold mb-0">{{ chamados|selectattr('Status', 'equalto', 'Aberto')|list|length }}
+                    </p>
+                </div>
+                <i class="bi bi-plus-circle display-6"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 align-items-end mb-4">
+    <div class="col-md-3">
+        <label for="busca-alertas" class="form-label">Buscar por site:</label>
+        <input type="text" id="busca-alertas" class="form-control" placeholder="Digite para buscar...">
+    </div>
+    <div class="col-md-3">
+        <label for="filtro-status" class="form-label">Filtrar por status:</label>
+        <select class="form-select" id="filtro-status">
+            <option value="">Todos</option>
+            <option value="Aberto">Aberto</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Concluído">Concluído</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="filtro-data-inicio" class="form-label">Data início:</label>
+        <input type="date" id="filtro-data-inicio" class="form-control">
+    </div>
+    <div class="col-md-3">
+        <label for="filtro-data-fim" class="form-label">Data fim:</label>
+        <input type="date" id="filtro-data-fim" class="form-control">
+    </div>
+    <div class="col-md-3">
+        <label for="filtro-analista" class="form-label">Filtrar por analista:</label>
+        <select class="form-select" id="filtro-analista">
+            <option value="">Todos</option>
+            {% set analistas = chamados | map(attribute='Responsável') | select | unique | list %}
+            {% for analista in analistas %}
+            <option value="{{ analista|lower }}">{{ analista }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-auto mt-3">
+        <button class="btn btn-secondary" id="limpar-filtros">Limpar Filtros</button>
+    </div>
+    <div class="col-md-auto mt-3">
+        <a href="/exportar" class="btn btn-outline-light"><i class="bi bi-file-earmark-excel"></i> Exportar</a>
+    </div>
+</div>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="lista-alertas-cards">
+    {% for chamado in chamados %}
+    <div class="col" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+        <div class="card h-100 chamado-card border-0 shadow-sm" data-id="{{ chamado['ID'] }}"
+            data-titulo="{{ chamado['Título'] }}" data-descricao="{{ chamado['Descrição'] }}"
+            data-responsavel="{{ chamado['Responsável']|lower }}" data-status="{{ chamado['Status'] }}"
+            data-cidade="{{ chamado['Cidade'] }}" data-uf="{{ chamado['UF'] }}" data-site="{{ chamado['Site'] }}"
+            data-cell="{{ chamado['Cell'] }}" data-tecnologia="{{ chamado['Tecnologia'] }}"
+            data-tipo="{{ chamado['Tipo'] }}" data-alteracao="{{ chamado['Alteração'] }}"
+            data-aplicacao_inicio="{{ chamado['Data Aplicação Início'] }}"
+            data-aplicacao_fim="{{ chamado['Data Aplicação Fim'] }}" data-antes="{{ chamado['Antes'] }}"
+            data-depois="{{ chamado['Depois'] }}" data-obs="{{ chamado['OBS'] }}"
+            data-material="{{ chamado['Material de Apoio'] }}">
+            <div class="card-header bg-transparent fw-semibold">
+                <i class="bi bi-exclamation-triangle"></i> {{ chamado['ID'] }} - {{ chamado['Cell'] }}
+            </div>
+            <div class="card-body">
+                <p class="card-text small">{{ chamado['Descrição'][:100] }}...</p>
+                <p class="text-muted small mb-1"><i class="bi bi-person"></i> {{ chamado['Responsável'] | default('Não atribuído') }}</p>
+                <p class="text-muted small mb-1"><i class="bi bi-calendar-event"></i> Início:
+                    {{ chamado['Data Aplicação Início'] }}</p>
+                <span
+                    class="badge {% if chamado['Status'] == 'Concluído' %}bg-success{% elif chamado['Status'] == 'Em andamento' %}bg-warning{% else %}bg-secondary{% endif %}">{{
+                    chamado['Status'] }}</span>
+                <div class="mt-3 d-flex gap-2">
+                    <a href="/concluir/{{ chamado['ID'] }}" class="btn btn-sm btn-success">Concluir</a>
+                    <a href="/editar/{{ chamado['ID'] }}" class="btn btn-sm btn-warning">Editar</a>
+                    <a href="#" class="btn btn-sm btn-danger"
+                        onclick="confirmarExclusao({{ chamado['ID'] }})">Excluir</a>
+                    <button class="btn btn-sm btn-info" onclick="exibirDetalhes(this)">Detalhes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="confirmarExclusaoModal" tabindex="-1" aria-labelledby="confirmarExclusaoModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmarExcluirModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja excluir este chamado? Esta ação não pode ser desfeita.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a href="#" id="excluirChamadoBtn" class="btn btn-danger">Sim, Excluir</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detalhesChamadoModal" tabindex="-1" aria-labelledby="detalhesChamadoModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detalhesChamadoModalLabel">Detalhes do Chamado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalhes-chamado-conteudo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const buscaInput = document.getElementById('busca-alertas');
+    const statusSelect = document.getElementById('filtro-status');
+    const analistaSelect = document.getElementById('filtro-analista');
+    const dataInicioInput = document.getElementById('filtro-data-inicio');
+    const dataFimInput = document.getElementById('filtro-data-fim');
+    const cards = document.querySelectorAll('.chamado-card');
+    const limparFiltrosBtn = document.getElementById('limpar-filtros');
+
+    function filtrar() {
+        const termo = buscaInput.value.toLowerCase();
+        const status = statusSelect.value;
+        const analista = analistaSelect.value;
+        const dataInicio = new Date(dataInicioInput.value);
+        const dataFim = new Date(dataFimInput.value);
+
+        cards.forEach(card => {
+            const site = card.dataset.site.toLowerCase();
+            const chamadoStatus = card.dataset.status;
+            const responsavel = card.dataset.responsavel;
+            const dataAplicacao = new Date(card.dataset.aplicacao_inicio);
+
+            const porSite = !termo || site.includes(termo);
+            const porStatus = !status || chamadoStatus === status;
+            const porAnalista = !analista || responsavel === analista;
+            const porData = (!dataInicioInput.value || dataAplicacao >= dataInicio) &&
+                (!dataFimInput.value || dataAplicacao <= dataFim);
+
+            card.parentElement.style.display = (porSite && porStatus && porAnalista && porData) ? '' : 'none';
+        });
+
+        buscaInput.classList.toggle('filtro-ativo', buscaInput.value !== '');
+        statusSelect.classList.toggle('filtro-ativo', statusSelect.value !== '');
+        analistaSelect.classList.toggle('filtro-ativo', analistaSelect.value !== '');
+        dataInicioInput.classList.toggle('filtro-ativo', dataInicioInput.value !== '');
+        dataFimInput.classList.toggle('filtro-ativo', dataFimInput.value !== '');
+    }
+
+    buscaInput.addEventListener('input', filtrar);
+    statusSelect.addEventListener('change', filtrar);
+    analistaSelect.addEventListener('change', filtrar);
+    dataInicioInput.addEventListener('change', filtrar);
+    dataFimInput.addEventListener('change', filtrar);
+
+    function confirmarExclusao(id) {
+        const modal = new bootstrap.Modal(document.getElementById('confirmarExclusaoModal'));
+        const btnExcluir = document.getElementById('excluirChamadoBtn');
+        btnExcluir.href = `/excluir/${id}`;
+        modal.show();
+    }
+
+    function exibirDetalhes(botao) {
+        const card = botao.closest('.chamado-card');
+        const dados = {
+            id: card.dataset.id,
+            titulo: card.dataset.titulo,
+            descricao: card.dataset.descricao,
+            responsavel: card.dataset.responsavel,
+            status: card.dataset.status,
+            cidade: card.dataset.cidade,
+            uf: card.dataset.uf,
+            site: card.dataset.site,
+            cell: card.dataset.cell,
+            tecnologia: card.dataset.tecnologia,
+            tipo: card.dataset.tipo,
+            alteracao: card.dataset.alteracao,
+            aplicacao_inicio: card.dataset.aplicacao_inicio,
+            aplicacao_fim: card.dataset.aplicacao_fim,
+            antes: card.dataset.antes,
+            depois: card.dataset.depois,
+            obs: card.dataset.obs,
+            material: card.dataset.material
+        };
+        const modalBody = document.getElementById('detalhes-chamado-conteudo');
+        modalBody.innerHTML = `
+          <p><strong>ID:</strong> ${dados.id}</p>
+          <p><strong>Título:</strong> ${dados.titulo}</p>
+          <p><strong>Responsável:</strong> ${dados.responsavel}</p>
+          <p><strong>Status:</strong> ${dados.status}</p>
+          <p><strong>Cidade:</strong> ${dados.cidade}</p>
+          <p><strong>UF:</strong> ${dados.uf}</p>
+          <p><strong>Site:</strong> ${dados.site}</p>
+          <p><strong>Cell:</strong> ${dados.cell}</p>
+          <p><strong>Tecnologia:</strong> ${dados.tecnologia}</p>
+          <p><strong>Tipo:</strong> ${dados.tipo}</p>
+          <p><strong>Alteração:</strong> ${dados.alteracao}</p>
+          <p><strong>Aplicação Início:</strong> ${dados.aplicacao_inicio}</p>
+          <p><strong>Aplicação Fim:</strong> ${dados.aplicacao_fim}</p>
+          <p><strong>Antes:</strong> ${dados.antes}</p>
+          <p><strong>Depois:</strong> ${dados.depois}</p>
+          <p><strong>OBS:</strong> ${dados.obs}</p>
+          <p><strong>Descrição:</strong> ${dados.descricao}</p>
+          <p><strong>Material de Apoio:</strong> ${dados.material}</p>
+        `;
+        const modal = new bootstrap.Modal(document.getElementById('detalhesChamadoModal'));
+        modal.show();
+    }
+
+    limparFiltrosBtn.addEventListener('click', () => {
+        buscaInput.value = '';
+        statusSelect.value = '';
+        analistaSelect.value = '';
+        dataInicioInput.value = '';
+        dataFimInput.value = '';
+
+        buscaInput.classList.remove('filtro-ativo');
+        statusSelect.classList.remove('filtro-ativo');
+        analistaSelect.classList.remove('filtro-ativo');
+        dataInicioInput.classList.remove('filtro-ativo');
+        dataFimInput.classList.remove('filtro-ativo');
+
+        filtrar();
+    });
+</script>
+
+{% endblock %}

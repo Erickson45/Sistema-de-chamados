@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Novo Item Blacklist{% endblock %}
+{% block content %}
+<h2 class="mb-4">Novo Item Blacklist</h2>
+<form action="/blacklist/criar" method="post">
+    <div class="mb-3">
+        <label for="cidade" class="form-label">Cidade</label>
+        <input type="text" class="form-control" id="cidade" name="cidade" required>
+    </div>
+    <div class="mb-3">
+        <label for="uf" class="form-label">UF</label>
+        <input type="text" class="form-control" id="uf" name="uf" required>
+    </div>
+    <div class="mb-3">
+        <label for="site" class="form-label">Site</label>
+        <input type="text" class="form-control" id="site" name="site" required>
+    </div>
+    <div class="mb-3">
+        <label for="cell" class="form-label">Cell</label>
+        <input type="text" class="form-control" id="cell" name="cell">
+    </div>
+    <div class="mb-3">
+        <label for="tecnologia" class="form-label">Tecnologia</label>
+        <input type="text" class="form-control" id="tecnologia" name="tecnologia">
+    </div>
+    <div class="mb-3">
+        <label for="tipo" class="form-label">Tipo</label>
+        <input type="text" class="form-control" id="tipo" name="tipo">
+    </div>
+    <div class="mb-3">
+        <label for="alteracao" class="form-label">Alteração</label>
+        <input type="text" class="form-control" id="alteracao" name="alteracao">
+    </div>
+    <div class="mb-3">
+        <label for="aplicacao_inicio" class="form-label">Data Aplicação Início</label>
+        <input type="datetime-local" class="form-control" id="aplicacao_inicio" name="aplicacao_inicio" required>
+    </div>
+    <div class="mb-3">
+        <label for="aplicacao_fim" class="form-label">Data Aplicação Fim</label>
+        <input type="datetime-local" class="form-control" id="aplicacao_fim" name="aplicacao_fim">
+    </div>
+    <div class="mb-3">
+        <label for="antes" class="form-label">Antes</label>
+        <textarea class="form-control" id="antes" name="antes" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="depois" class="form-label">Depois</label>
+        <textarea class="form-control" id="depois" name="depois" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="status" class="form-label">Status</label>
+        <select class="form-select" id="status" name="status" required>
+            <option value="Pendente">Pendente</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="obs" class="form-label">OBS</label>
+        <textarea class="form-control" id="obs" name="obs" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="descricao" class="form-label">Descrição</label>
+        <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
+    </div>
+    <div class="mb-3">
+        <label for="material" class="form-label">Material de Apoio</label>
+        <input type="text" class="form-control" id="material" name="material">
+    </div>
+    <div class="mb-3">
+        <label for="responsavel" class="form-label">Responsável</label>
+        <input type="text" class="form-control" id="responsavel" name="responsavel" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+    <a href="/blacklist" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Concluir Chamado{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+    <h2 class="mb-0">Concluir Chamado #{{ chamado['ID'] }}</h2>
+    <div>
+      <a href="/" class="btn btn-outline-light me-2">Lista de Chamados</a>
+      <a href="/novo" class="btn btn-success">Novo Chamado</a>
+    </div>
+  </div>
+
+  <div class="card shadow-lg border-0 mb-4" data-aos="fade-up">
+    <div class="card-body">
+      <h5 class="card-title text-success">{{ chamado['Título'] }}</h5>
+      <p class="card-text"><strong>Descrição:</strong> <span class="text-dark">{{ chamado['Descrição'] }}</span></p>
+      <p class="card-text"><strong>Responsável:</strong> <span class="text-dark">{{ chamado['Responsável'] }}</span></p>
+      <p class="card-text"><strong>Status:</strong> 
+        <span class="badge 
+          {% if chamado['Status'] == 'Concluído' %}bg-success
+          {% elif chamado['Status'] == 'Em andamento' %}bg-warning
+          {% else %}bg-secondary{% endif %}">
+          {{ chamado['Status'] }}
+        </span>
+      </p>
+      <p class="card-text"><strong>Observações:</strong> <span class="text-dark">{{ chamado['OBS'] }}</span></p>
+    </div>
+  </div>
+
+  <form id="formConclusao" method="POST" action="/salvar_conclusao" class="mt-4" data-aos="fade-up">
+    <input type="hidden" name="id" value="{{ chamado['ID'] }}">
+    <div class="mb-3">
+      <label for="solucao" class="form-label">Solução</label>
+      <textarea class="form-control" id="solucao" name="solucao" rows="4" required></textarea>
+      <div class="form-text text-white">Descreva detalhadamente a solução aplicada ao chamado.</div>
+    </div>
+    <div class="d-flex gap-3">
+      <button type="button" class="btn btn-primary shadow btn-concluir" data-bs-toggle="modal" data-bs-target="#confirmModal">Salvar Conclusão</button>
+      <a href="/" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+
+  <!-- Modal de Confirmação -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" data-aos="zoom-in">
+      <div class="modal-content bg-dark text-white border-light shadow-lg">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="confirmModalLabel">Confirmação</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          Tem certeza que deseja concluir o chamado?
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" onclick="document.getElementById('formConclusao').submit()">Sim, Concluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

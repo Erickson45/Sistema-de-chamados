@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Editar Item Blacklist{% endblock %}
+{% block content %}
+<h2 class="mb-4">Editar Item Blacklist</h2>
+<form action="/blacklist/atualizar" method="post">
+    <input type="hidden" name="id" value="{{ item.ID }}">
+    <div class="mb-3">
+        <label for="cidade" class="form-label">Cidade</label>
+        <input type="text" class="form-control" id="cidade" name="cidade" value="{{ item.Cidade }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="uf" class="form-label">UF</label>
+        <input type="text" class="form-control" id="uf" name="uf" value="{{ item.UF }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="site" class="form-label">Site</label>
+        <input type="text" class="form-control" id="site" name="site" value="{{ item.Site }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="cell" class="form-label">Cell</label>
+        <input type="text" class="form-control" id="cell" name="cell" value="{{ item.Cell }}">
+    </div>
+    <div class="mb-3">
+        <label for="tecnologia" class="form-label">Tecnologia</label>
+        <input type="text" class="form-control" id="tecnologia" name="tecnologia" value="{{ item.Tecnologia }}">
+    </div>
+    <div class="mb-3">
+        <label for="tipo" class="form-label">Tipo</label>
+        <input type="text" class="form-control" id="tipo" name="tipo" value="{{ item.Tipo }}">
+    </div>
+    <div class="mb-3">
+        <label for="alteracao" class="form-label">Alteração</label>
+        <input type="text" class="form-control" id="alteracao" name="alteracao" value="{{ item.Alteração }}">
+    </div>
+    <div class="mb-3">
+        <label for="aplicacao_inicio" class="form-label">Data Aplicação Início</label>
+        <input type="datetime-local" class="form-control" id="aplicacao_inicio" name="aplicacao_inicio"
+            value="{{ item['Data Aplicação Início'] }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="aplicacao_fim" class="form-label">Data Aplicação Fim</label>
+        <input type="datetime-local" class="form-control" id="aplicacao_fim" name="aplicacao_fim"
+            value="{{ item['Data Aplicação Fim'] }}">
+    </div>
+    <div class="mb-3">
+        <label for="antes" class="form-label">Antes</label>
+        <textarea class="form-control" id="antes" name="antes" rows="3">{{ item.Antes }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="depois" class="form-label">Depois</label>
+        <textarea class="form-control" id="depois" name="depois" rows="3">{{ item.Depois }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="status" class="form-label">Status</label>
+        <select class="form-select" id="status" name="status" required>
+            <option value="Pendente" {% if item.Status == 'Pendente' %}selected{% endif %}>Pendente</option>
+            <option value="Em andamento" {% if item.Status == 'Em andamento' %}selected{% endif %}>Em andamento
+            </option>
+            <option value="Concluído" {% if item.Status == 'Concluído' %}selected{% endif %}>Concluído</option>
+            <option value="Cancelado" {% if item.Status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="obs" class="form-label">OBS</label>
+        <textarea class="form-control" id="obs" name="obs" rows="3">{{ item.OBS }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="descricao" class="form-label">Descrição</label>
+        <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ item.Descrição }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="material" class="form-label">Material de Apoio</label>
+        <input type="text" class="form-control" id="material" name="material" value="{{ item['Material de Apoio'] }}">
+    </div>
+    <div class="mb-3">
+        <label for="responsavel" class="form-label">Responsável</label>
+        <input type="text" class="form-control" id="responsavel" name="responsavel" value="{{ item.Responsável }}"
+            required>
+    </div>
+    <button type="submit" class="btn btn-primary">Atualizar</button>
+    <a href="/blacklist" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Editar Chamado #{{ chamado['ID'] }}{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+        <h2 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Editar Chamado #{{ chamado['ID'] }}</h2>
+        <div class="d-flex gap-2">
+            <a href="/" class="btn btn-outline-light d-flex align-items-center"><i class="bi bi-list-ul me-1"></i> Chamados</a>
+        </div>
+    </div>
+
+    <form action="/atualizar" method="POST" data-aos="fade-up" class="row g-4">
+        <input type="hidden" name="id" value="{{ chamado['ID'] }}">
+        {% for campo in [
+            ('cidade', 'Cidade'),
+            ('uf', 'UF'),
+            ('site', 'Site'),
+            ('cell', 'Cell'),
+            ('tecnologia', 'Tecnologia'),
+            ('tipo', 'Tipo'),
+            ('alteracao', 'Alteração'),
+            ('aplicacao_inicio', 'Data Aplicação Início'),
+            ('aplicacao_fim', 'Data Aplicação Fim'),
+            ('antes', 'Antes'),
+            ('depois', 'Depois'),
+            ('status', 'Status'),
+            ('obs', 'OBS'),
+            ('descricao', 'Descrição'),
+            ('material', 'Material de Apoio'),
+            ('responsavel', 'Responsável')
+        ] %}
+        <div class="col-md-6">
+            <label for="{{ campo[0] }}" class="form-label">{{ campo[1] }}</label>
+            {% if campo[0] in ['descricao', 'obs', 'material'] %}
+            <textarea class="form-control" id="{{ campo[0] }}" name="{{ campo[0] }}" rows="3">{{ chamado[campo[1]] }}</textarea>
+            {% elif 'Data' in campo[1] %}
+            <input type="datetime-local" class="form-control" id="{{ campo[0] }}" name="{{ campo[0] }}" value="{{ chamado[campo[1]] }}">
+            {% else %}
+            <input type="text" class="form-control" id="{{ campo[0] }}" name="{{ campo[0] }}" value="{{ chamado[campo[1]] }}">
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="col-12 d-flex gap-3">
+            <button type="submit" class="btn btn-primary shadow-sm"><i class="bi bi-save me-1"></i>Salvar Alterações</button>
+            <a href="/" class="btn btn-secondary"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
+        </div>
+    </form>
+{% endblock %}
